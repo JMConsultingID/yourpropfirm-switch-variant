@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: YourPropFirm Switch Variant
-Description: Custom plugin to add a variant switcher on the WooCommerce checkout page so that users can switch variant.
+Description: Custom plugin to add a variant switcher on the WooCommerce checkout page so that users can switch variant and update order review.
 Version: 1.0
 Author: Your Name
 */
@@ -26,6 +26,9 @@ if ( ! class_exists( 'YourPropFirm_Switch_Variant' ) ) {
 
             // Save custom checkout field data to the order meta.
             add_action( 'woocommerce_checkout_update_order_meta', array( $this, 'save_variant_fields' ) );
+
+            // Enqueue the custom JavaScript for updating checkout.
+            add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_custom_script' ) );
         }
 
         /**
@@ -116,6 +119,26 @@ if ( ! class_exists( 'YourPropFirm_Switch_Variant' ) ) {
             }
             if ( ! empty( $_POST['challenge_amount'] ) ) {
                 update_post_meta( $order_id, '_challenge_amount', sanitize_text_field( $_POST['challenge_amount'] ) );
+            }
+        }
+
+        /**
+         * Enqueue custom JavaScript on checkout page to update order review when variant fields change.
+         */
+        public function enqueue_custom_script() {
+            if ( is_checkout() && ! is_order_received_page() ) {
+                // Enqueue jQuery if not already included.
+                wp_enqueue_script( 'jquery' );
+                // Inline JavaScript to trigger update_checkout event.
+                $script = "
+                    jQuery(function($){
+                        // Trigger update_checkout when challenge_type or challenge_amount is changed.
+                        $('#challenge_type, #challenge_amount').on('change', function(){
+                            $('body').trigger('update_checkout');
+                        });
+                    });
+                ";
+                wp_add_inline_script( 'jquery', $script );
             }
         }
     }
