@@ -39,21 +39,29 @@ class YourPropFirm_Variation_Manager {
         if (!is_checkout()) {
             return;
         }
-        
+
+        // Get the current endpoint
+        $current_endpoint = WC()->query->get_current_endpoint();
+
+        // Exclude 'order-received' and 'order-pay' from triggering this function
+        if (in_array($current_endpoint, ['order-received', 'order-pay'])) {
+            return;
+        }
+
         if (WC()->cart->is_empty()) {
             $product = wc_get_product($this->default_product_id);
-            
+
             if ($product && $product->is_type('variable')) {
                 $default_attributes = $product->get_default_attributes();
-                
+
                 // Format attributes correctly for WooCommerce
                 $formatted_attributes = [];
                 foreach ($default_attributes as $key => $value) {
                     $formatted_attributes['attribute_' . $key] = $value;
                 }
-                
+
                 $variation_id = $product->get_matching_variation($formatted_attributes);
-                    
+
                 if ($variation_id) {
                     WC()->cart->add_to_cart($this->default_product_id, 1, $variation_id, $formatted_attributes);
                     wp_safe_redirect(wc_get_checkout_url());
@@ -62,6 +70,7 @@ class YourPropFirm_Variation_Manager {
             }
         }
     }
+
 
     public function enqueue_scripts() {
         if (is_checkout()) {
