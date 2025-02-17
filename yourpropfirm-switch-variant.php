@@ -35,16 +35,17 @@ class YourPropFirm_Variation_Manager {
 
         add_filter('template_include', [$this, 'handle_checkout_endpoints'], 99);
         add_filter('request', [$this, 'handle_checkout_query_vars']);
+        add_action('template_redirect', [$this, 'prevent_redirect_on_checkout_endpoints'], 1);
         add_action('template_redirect', [$this, 'verify_order_received']);
     }
 
     public function handle_checkout_endpoints($template) {
-        // Check if it's a checkout endpoint (like order-received)
+        // Check if it's a checkout endpoint (like order-received or order-pay)
         if (is_checkout() && is_wc_endpoint_url()) {
             $endpoint = WC()->query->get_current_endpoint();
 
-            if ($endpoint === 'order-received') {
-                // Return the order-received template
+            if (in_array($endpoint, ['order-received', 'order-pay'])) {
+                // Ensure WooCommerce loads the correct template
                 return WC()->plugin_path() . '/templates/checkout/thankyou.php';
             }
         }
@@ -52,16 +53,31 @@ class YourPropFirm_Variation_Manager {
         return $template;
     }
 
+
     public function handle_checkout_query_vars($vars) {
-        // Ensure order-received endpoint works correctly on the homepage
+        // Ensure order-received and order-pay endpoints work correctly on the homepage
         if (isset($vars['page_id']) && $vars['page_id'] == get_option('page_on_front') && get_option('page_on_front') == wc_get_page_id('checkout')) {
             if (isset($_GET['order-received'])) {
                 $vars['order-received'] = $_GET['order-received'];
+            }
+            if (isset($_GET['order-pay'])) {
+                $vars['order-pay'] = $_GET['order-pay'];
             }
         }
 
         return $vars;
     }
+
+    public function prevent_redirect_on_checkout_endpoints() {
+        if (is_checkout() && is_wc_endpoint_url()) {
+            $endpoint = WC()->query->get_current_endpoint();
+
+            if (in_array($endpoint, ['order-received', 'order-pay'])) {
+                remove_action('template_redirect', 'redirect_canonical'); // Prevents WP from forcing homepage redirect
+            }
+        }
+    }
+
 
     public function verify_order_received() {
         if (isset($_GET['order-received'])) {
