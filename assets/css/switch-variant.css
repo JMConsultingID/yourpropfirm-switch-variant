@@ -34,6 +34,10 @@
     background-color: #e0e0e0;
 }
 
+.yourpropfirm-radio-label input[type="radio"]:checked + .yourpropfirm-radio-label {
+  background-color: #007bff; /* or any color you want */
+}
+
 .yourpropfirm-radio-group input[type="radio"]:disabled + label {
     opacity: 0.5;
     cursor: not-allowed;
