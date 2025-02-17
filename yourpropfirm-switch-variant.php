@@ -25,7 +25,7 @@ class YourPropFirm_Variation_Manager {
 
 
         // Initialize default product hooks
-        add_action('init', [$this, 'add_default_variation_to_cart']);
+        //add_action('init', [$this, 'add_default_variation_to_cart']);
         
         // Initialize variation switcher hooks
         add_action('woocommerce_before_checkout_billing_form', [$this, 'display_variant_selector'], 5);
