@@ -116,7 +116,7 @@ class YourPropFirm_Variation_Manager {
         echo '<h3>Choose Variant</h3>';
 
         foreach ($attributes as $attribute_name => $options) {
-            echo '<label>' . wc_attribute_label($attribute_name) . '</label>';
+            echo '<strong><label>' . wc_attribute_label($attribute_name) . '</label></strong>';
             echo '<div class="yourpropfirm-radio-group" data-attribute="' . esc_attr($attribute_name) . '">';
             foreach ($options as $option) {
                 $selected = (isset($selected_attributes['attribute_' . sanitize_title($attribute_name)]) && $selected_attributes['attribute_' . sanitize_title($attribute_name)] == $option) ? ' checked' : '';
