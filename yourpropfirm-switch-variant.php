@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: YourPropFirm Switch Variant
-Description: Allow users to switch variations on the checkout page and update cart automatically.
+Description: Allow users to switch variations on the checkout page for all variable products in cart and update cart automatically.
 Version: 1.0
 Author: Your Name
 */
@@ -16,7 +16,7 @@ if ( ! class_exists( 'YourPropFirm_Switch_Variant' ) ) {
 
         public function __construct() {
             // Tampilkan dropdown variasi di halaman checkout (sebelum billing form).
-            add_action( 'woocommerce_before_checkout_billing_form', array( $this, 'display_variant_switcher' ) );
+            add_action( 'woocommerce_before_checkout_billing_form', array( $this, 'display_variation_switchers' ) );
 
             // Enqueue script untuk memicu AJAX dan update cart.
             add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -27,98 +27,115 @@ if ( ! class_exists( 'YourPropFirm_Switch_Variant' ) ) {
         }
 
         /**
-         * Menampilkan form switch variant di halaman checkout.
+         * Display variation switchers for all variable products in the cart.
          */
-        public function display_variant_switcher() {
-            // Ganti dengan ID produk induk (variable product) Anda
-            $product_id = 65079;
-
-            $product = wc_get_product( $product_id );
-            if ( ! $product || 'variable' !== $product->get_type() ) {
-                echo '<p style="color:red;">Variable product not found or invalid product ID.</p>';
-                return;
+        public function display_variation_switchers() {
+            // Ambil semua item di cart
+            $cart_items = WC()->cart->get_cart();
+            if ( empty( $cart_items ) ) {
+                return; // Tidak ada produk di cart
             }
 
-            // Ambil semua variation IDs
-            $variation_ids = $product->get_children();
+            echo '<div class="yourpropfirm-switch-variant-wrapper">';
+            echo '<h3>' . __( 'Switch Variations', 'yourpropfirm-switch-variant' ) . '</h3>';
 
-            // Dapatkan semua atribut yang digunakan product ini
-            $available_variations = array();
-            foreach ( $variation_ids as $variation_id ) {
-                $variation_obj = wc_get_product( $variation_id );
-                if ( $variation_obj ) {
+            // Loop setiap item di cart
+            foreach ( $cart_items as $cart_item_key => $cart_item ) {
+                $product = wc_get_product( $cart_item['product_id'] );
+
+                // Hanya tampilkan form untuk product yang bertipe "variable"
+                if ( ! $product || 'variable' !== $product->get_type() ) {
+                    continue;
+                }
+
+                // Ambil semua variation IDs
+                $variation_ids = $product->get_children();
+                if ( empty( $variation_ids ) ) {
+                    continue;
+                }
+
+                // Kumpulkan data variation: attributes & price
+                $available_variations = array();
+                foreach ( $variation_ids as $variation_id ) {
+                    $variation_obj = wc_get_product( $variation_id );
+                    if ( ! $variation_obj ) {
+                        continue;
+                    }
                     $available_variations[] = array(
                         'variation_id' => $variation_id,
-                        'attributes'   => $variation_obj->get_attributes(),
+                        'attributes'   => $variation_obj->get_attributes(), // ex: ['pa_challenge-type' => '1-phase', ...]
                         'price_html'   => $variation_obj->get_price_html(),
                     );
                 }
-            }
 
-            // Kumpulkan possible values dari setiap attribute
-            // Di WooCommerce, nama atribut di database umumnya berformat 'pa_challenge-type' dsb.
-            $attribute_taxonomies = wc_get_attribute_taxonomies();
-            $attributes_map = array();
-            foreach ( $attribute_taxonomies as $tax ) {
-                // Contoh slug: 'pa_challenge-type'
-                $attributes_map[ 'pa_' . $tax->attribute_name ] = $tax->attribute_label;
-            }
+                // Cari semua possible values untuk attribute 'challenge-type' dan 'challenge-amount'
+                // Ganti slug jika Anda menggunakan nama lain
+                $attr_challenge_type   = 'pa_challenge-type';
+                $attr_challenge_amount = 'pa_challenge-amount';
 
-            // Misal kita fokus pada attribute 'pa_challenge-type' dan 'pa_challenge-amount'
-            // Boleh di-extend sesuai kebutuhan
-            $attr_challenge_type   = 'pa_challenge-type';
-            $attr_challenge_amount = 'pa_challenge-amount';
+                $challenge_type_options   = array();
+                $challenge_amount_options = array();
 
-            // Dapatkan daftar unique values
-            $challenge_type_options   = array();
-            $challenge_amount_options = array();
-
-            foreach ( $available_variations as $variation ) {
-                $atts = $variation['attributes'];
-                if ( isset( $atts[ $attr_challenge_type ] ) ) {
-                    $challenge_type_options[] = $atts[ $attr_challenge_type ];
+                foreach ( $available_variations as $variation ) {
+                    $atts = $variation['attributes'];
+                    if ( isset( $atts[ $attr_challenge_type ] ) ) {
+                        $challenge_type_options[] = $atts[ $attr_challenge_type ];
+                    }
+                    if ( isset( $atts[ $attr_challenge_amount ] ) ) {
+                        $challenge_amount_options[] = $atts[ $attr_challenge_amount ];
+                    }
                 }
-                if ( isset( $atts[ $attr_challenge_amount ] ) ) {
-                    $challenge_amount_options[] = $atts[ $attr_challenge_amount ];
+
+                // Hilangkan duplikat
+                $challenge_type_options   = array_unique( $challenge_type_options );
+                $challenge_amount_options = array_unique( $challenge_amount_options );
+
+                // Buat form
+                echo '<div class="yourpropfirm-switch-variant-item" style="border:1px solid #ddd; margin-bottom:15px; padding:10px;">';
+                echo '<strong>' . $product->get_name() . '</strong><br>';
+
+                // Tampilkan info item lama (misal Variation Title) jika ada
+                if ( isset( $cart_item['variation_id'] ) && $cart_item['variation_id'] ) {
+                    $current_variation_obj = wc_get_product( $cart_item['variation_id'] );
+                    if ( $current_variation_obj ) {
+                        echo '<p style="margin:5px 0;">' . sprintf( __( 'Current Variation: %s', 'yourpropfirm-switch-variant' ), $current_variation_obj->get_name() ) . '</p>';
+                    }
                 }
+
+                // Dropdown Challenge Type
+                echo '<p class="form-row form-row-wide">';
+                echo '<label>' . __( 'Challenge Type', 'yourpropfirm-switch-variant' ) . '</label>';
+                echo '<select class="yourpropfirm-challenge-type" data-cart_item_key="' . esc_attr( $cart_item_key ) . '">';
+                echo '<option value="">' . __( 'Select Challenge Type', 'yourpropfirm-switch-variant' ) . '</option>';
+                foreach ( $challenge_type_options as $option ) {
+                    echo '<option value="' . esc_attr( $option ) . '">' . esc_html( ucfirst( $option ) ) . '</option>';
+                }
+                echo '</select>';
+                echo '</p>';
+
+                // Dropdown Challenge Amount
+                echo '<p class="form-row form-row-wide">';
+                echo '<label>' . __( 'Challenge Amount', 'yourpropfirm-switch-variant' ) . '</label>';
+                echo '<select class="yourpropfirm-challenge-amount" data-cart_item_key="' . esc_attr( $cart_item_key ) . '">';
+                echo '<option value="">' . __( 'Select Challenge Amount', 'yourpropfirm-switch-variant' ) . '</option>';
+                foreach ( $challenge_amount_options as $option ) {
+                    echo '<option value="' . esc_attr( $option ) . '">' . esc_html( ucfirst( $option ) ) . '</option>';
+                }
+                echo '</select>';
+                echo '</p>';
+
+                // Simpan product_id dan cart_item_key di hidden input agar bisa digunakan di AJAX
+                echo '<input type="hidden" class="yourpropfirm-product-id" value="' . esc_attr( $cart_item['product_id'] ) . '">';
+                echo '<input type="hidden" class="yourpropfirm-cart-item-key" value="' . esc_attr( $cart_item_key ) . '">';
+
+                echo '</div>'; // end .yourpropfirm-switch-variant-item
             }
 
-            $challenge_type_options   = array_unique( $challenge_type_options );
-            $challenge_amount_options = array_unique( $challenge_amount_options );
-
-            echo '<div class="yourpropfirm-switch-variant" style="margin-bottom:20px;">';
-            echo '<h3>' . __( 'Switch Variant', 'yourpropfirm-switch-variant' ) . '</h3>';
-
-            // Challenge Type
-            echo '<p class="form-row form-row-wide">';
-            echo '<label for="challenge_type">' . __( 'Challenge Type', 'yourpropfirm-switch-variant' ) . '</label>';
-            echo '<select name="challenge_type" id="challenge_type" class="select">';
-            echo '<option value="">' . __( 'Select Challenge Type', 'yourpropfirm-switch-variant' ) . '</option>';
-            foreach ( $challenge_type_options as $option ) {
-                echo '<option value="' . esc_attr( $option ) . '">' . esc_html( ucfirst( $option ) ) . '</option>';
-            }
-            echo '</select>';
-            echo '</p>';
-
-            // Challenge Amount
-            echo '<p class="form-row form-row-wide">';
-            echo '<label for="challenge_amount">' . __( 'Challenge Amount', 'yourpropfirm-switch-variant' ) . '</label>';
-            echo '<select name="challenge_amount" id="challenge_amount" class="select">';
-            echo '<option value="">' . __( 'Select Challenge Amount', 'yourpropfirm-switch-variant' ) . '</option>';
-            foreach ( $challenge_amount_options as $option ) {
-                echo '<option value="' . esc_attr( $option ) . '">' . esc_html( ucfirst( $option ) ) . '</option>';
-            }
-            echo '</select>';
-            echo '</p>';
-
-            // Hidden input agar JS tahu ID product induk
-            echo '<input type="hidden" id="yourpropfirm_product_id" value="' . esc_attr( $product_id ) . '">';
-
-            echo '</div>';
+            echo '</div>'; // end .yourpropfirm-switch-variant-wrapper
         }
 
         /**
-         * Enqueue scripts yang dibutuhkan untuk AJAX update cart.
+         * Enqueue scripts needed for AJAX to update cart when user switches variation.
          */
         public function enqueue_scripts() {
             if ( is_checkout() ) {
@@ -128,37 +145,43 @@ if ( ! class_exists( 'YourPropFirm_Switch_Variant' ) ) {
                 // Localize script
                 $ajax_url = admin_url( 'admin-ajax.php' );
 
-                // Buat script
+                // Script JS
                 $script = "
                 jQuery(function($){
-                    var timeout = null;
-                    // Trigger event saat user mengubah Challenge Type / Amount
-                    $('#challenge_type, #challenge_amount').on('change', function(){
-                        // Dapatkan value terpilih
-                        var challengeType   = $('#challenge_type').val();
-                        var challengeAmount = $('#challenge_amount').val();
-                        var productID       = $('#yourpropfirm_product_id').val();
+                    // Saat user mengubah dropdown
+                    $('.yourpropfirm-challenge-type, .yourpropfirm-challenge-amount').on('change', function(){
+                        var parentWrap      = $(this).closest('.yourpropfirm-switch-variant-item');
+                        var productID       = parentWrap.find('.yourpropfirm-product-id').val();
+                        var cartItemKey     = parentWrap.find('.yourpropfirm-cart-item-key').val();
+                        var challengeType   = parentWrap.find('.yourpropfirm-challenge-type').val();
+                        var challengeAmount = parentWrap.find('.yourpropfirm-challenge-amount').val();
 
+                        // Pastikan user memilih keduanya
                         if( !challengeType || !challengeAmount ){
-                            return; // Pastikan user memilih keduanya
+                            return;
                         }
 
-                        // Panggil AJAX untuk update cart
+                        // AJAX call
                         $.ajax({
                             url: '{$ajax_url}',
                             type: 'POST',
                             data: {
                                 action: 'yourpropfirm_update_cart_variation',
                                 product_id: productID,
+                                cart_item_key: cartItemKey,
                                 challenge_type: challengeType,
                                 challenge_amount: challengeAmount
                             },
                             beforeSend: function(){
-                                // Bisa tampilkan loader di sini
+                                // Bisa tampilkan loader
                             },
                             success: function(response){
-                                // Setelah berhasil, trigger update_checkout agar order review di-refresh
-                                $('body').trigger('update_checkout');
+                                if(response.success){
+                                    // Trigger update_checkout agar order review di-refresh
+                                    $('body').trigger('update_checkout');
+                                } else {
+                                    console.log(response.data);
+                                }
                             },
                             error: function(err){
                                 console.log(err);
@@ -174,19 +197,23 @@ if ( ! class_exists( 'YourPropFirm_Switch_Variant' ) ) {
         }
 
         /**
-         * AJAX callback untuk menghapus item lama dan menambahkan item baru dengan variation ID yang sesuai.
+         * AJAX callback to remove old cart item and add new variation item.
          */
         public function update_cart_variation() {
-            // Pastikan data dikirim via POST
+            // Dapatkan data dari AJAX
             $product_id       = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
+            $cart_item_key    = isset($_POST['cart_item_key']) ? sanitize_text_field($_POST['cart_item_key']) : '';
             $challenge_type   = isset($_POST['challenge_type']) ? sanitize_text_field($_POST['challenge_type']) : '';
             $challenge_amount = isset($_POST['challenge_amount']) ? sanitize_text_field($_POST['challenge_amount']) : '';
 
-            if( ! $product_id || ! $challenge_type || ! $challenge_amount ) {
-                wp_send_json_error( array( 'message' => 'Missing data.' ) );
+            if( ! $product_id || ! $cart_item_key ) {
+                wp_send_json_error( array( 'message' => 'Missing product_id or cart_item_key.' ) );
+            }
+            if( ! $challenge_type || ! $challenge_amount ) {
+                wp_send_json_error( array( 'message' => 'Missing variation attributes.' ) );
             }
 
-            // Cari variation ID yang cocok dengan kombinasi atribut
+            // Cari variation ID yang cocok
             $variation_id = $this->find_matching_variation( $product_id, array(
                 'attribute_pa_challenge-type'   => $challenge_type,
                 'attribute_pa_challenge-amount' => $challenge_amount
@@ -196,10 +223,10 @@ if ( ! class_exists( 'YourPropFirm_Switch_Variant' ) ) {
                 wp_send_json_error( array( 'message' => 'No matching variation found.' ) );
             }
 
-            // Hapus item lama (yang punya parent $product_id) dari cart
-            $this->remove_variations_from_cart( $product_id );
+            // Hapus item lama dari cart
+            WC()->cart->remove_cart_item( $cart_item_key );
 
-            // Tambahkan item baru (variation ID) ke cart
+            // Tambahkan item baru
             $added = WC()->cart->add_to_cart( $product_id, 1, $variation_id, array(
                 'attribute_pa_challenge-type'   => $challenge_type,
                 'attribute_pa_challenge-amount' => $challenge_amount
@@ -213,7 +240,7 @@ if ( ! class_exists( 'YourPropFirm_Switch_Variant' ) ) {
         }
 
         /**
-         * Fungsi untuk menemukan variation ID berdasarkan atribut yang dipilih user.
+         * Find a variation ID matching the given attributes.
          */
         private function find_matching_variation( $product_id, $attributes ) {
             $product = wc_get_product( $product_id );
@@ -228,6 +255,7 @@ if ( ! class_exists( 'YourPropFirm_Switch_Variant' ) ) {
                 }
                 $matched = true;
                 foreach ( $attributes as $attr_name => $attr_value ) {
+                    // Pastikan bandingkan dengan lowercase atau format yang sama
                     $variation_attr = $variation->get_attribute( $attr_name );
                     if ( strtolower( $variation_attr ) !== strtolower( $attr_value ) ) {
                         $matched = false;
@@ -240,19 +268,6 @@ if ( ! class_exists( 'YourPropFirm_Switch_Variant' ) ) {
             }
             return 0;
         }
-
-        /**
-         * Hapus item lama di cart yang parent-nya adalah $product_id (jika ada).
-         */
-        private function remove_variations_from_cart( $product_id ) {
-            foreach ( WC()->cart->get_cart() as $cart_key => $cart_item ) {
-                if ( $cart_item['product_id'] == $product_id ) {
-                    // Hapus item ini
-                    WC()->cart->remove_cart_item( $cart_key );
-                }
-            }
-        }
-
     }
 
     new YourPropFirm_Switch_Variant();
