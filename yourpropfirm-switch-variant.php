@@ -48,10 +48,14 @@ class YourPropFirm_Variation_Manager {
             
             if ($product && $product->is_type('variable')) {
                 $default_attributes = $product->get_default_attributes();
-
+                ?>
+                <p>
+                    <?php
                 // Testing raw output
                 var_dump($default_attributes);
-                
+                ?>
+                </p>
+                <?php
                 if (!empty($default_attributes)) {
                     $variation_id = $product->get_matching_variation($default_attributes);
 
