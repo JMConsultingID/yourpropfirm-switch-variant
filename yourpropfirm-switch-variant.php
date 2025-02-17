@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: YourPropFirm Switch Variant
+ * Plugin Name: YourPropFirm Product Variation Manager
  * Plugin URI: https://example.com
- * Description: Allows switching product variations on the checkout page before filling the billing form.
+ * Description: Sets default product variation and allows switching variations on checkout.
  * Version: 1.0.0
  * Author: Your Name
  * Author URI: https://example.com
@@ -13,13 +13,48 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly.
 }
 
-class YourPropFirm_Switch_Variant {
+class YourPropFirm_Variation_Manager {
+    private $default_product_id;
 
     public function __construct() {
+        // Set your default product ID here
+        $this->default_product_id = 1202; // Replace with your product ID
+
+        // Initialize default product hooks
+        add_action('init', [$this, 'add_default_variation_to_cart']);
+        
+        // Initialize variation switcher hooks
         add_action('woocommerce_before_checkout_billing_form', [$this, 'display_variant_selector'], 5);
         add_action('wp_ajax_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_ajax_nopriv_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
+    }
+
+    public function add_default_variation_to_cart() {
+        // Only run on checkout page
+        if (!is_checkout()) {
+            return;
+        }
+        
+        // Check if cart is empty
+        if (WC()->cart->is_empty()) {
+            $product = wc_get_product($this->default_product_id);
+            
+            if ($product && $product->is_type('variable')) {
+                // Get default attributes
+                $default_attributes = $product->get_default_attributes();
+                
+                if (!empty($default_attributes)) {
+                    // Get variation ID based on default attributes
+                    $variation_id = $product->get_matching_variation($default_attributes);
+                    
+                    if ($variation_id) {
+                        // Add the variation to cart
+                        WC()->cart->add_to_cart($this->default_product_id, 1, $variation_id, $default_attributes);
+                    }
+                }
+            }
+        }
     }
 
     public function enqueue_scripts() {
@@ -83,7 +118,6 @@ class YourPropFirm_Switch_Variant {
         }
 
         echo '</div>';
-
     }
 
     public function update_cart() {
@@ -135,4 +169,4 @@ class YourPropFirm_Switch_Variant {
     }
 }
 
-new YourPropFirm_Switch_Variant();
+new YourPropFirm_Variation_Manager();
