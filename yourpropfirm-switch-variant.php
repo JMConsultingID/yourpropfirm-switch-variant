@@ -20,12 +20,8 @@ class YourPropFirm_Variation_Manager {
         // Set your default product ID here
         $this->default_product_id = 1202; // Replace with your product ID
 
-        add_action('template_redirect', [$this, 'handle_empty_cart_redirect'], 5);
-        add_filter('woocommerce_checkout_redirect_empty_cart', '__return_false');
-
-
         // Initialize default product hooks
-        //add_action('init', [$this, 'add_default_variation_to_cart']);
+        add_action('init', [$this, 'add_default_variation_to_cart']);
         
         // Initialize variation switcher hooks
         add_action('woocommerce_before_checkout_billing_form', [$this, 'display_variant_selector'], 5);
@@ -34,12 +30,13 @@ class YourPropFirm_Variation_Manager {
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
     }
 
-
-    public function handle_empty_cart_redirect() {
+    public function add_default_variation_to_cart() {
+        // Only run on checkout page
         if (!is_checkout()) {
             return;
         }
         
+        // Check if cart is empty
         if (WC()->cart->is_empty()) {
             $product = wc_get_product($this->default_product_id);
             
@@ -58,33 +55,6 @@ class YourPropFirm_Variation_Manager {
                     WC()->cart->add_to_cart($this->default_product_id, 1, $variation_id, $formatted_attributes);
                     wp_safe_redirect(wc_get_checkout_url());
                     exit;
-                }
-            }
-        }
-    }
-
-    public function add_default_variation_to_cart() {
-        // Only run on checkout page
-        if (!is_checkout()) {
-            return;
-        }
-        
-        // Check if cart is empty
-        if (WC()->cart->is_empty()) {
-            $product = wc_get_product($this->default_product_id);
-            
-            if ($product && $product->is_type('variable')) {
-                // Get default attributes
-                $default_attributes = $product->get_default_attributes();
-                
-                if (!empty($default_attributes)) {
-                    // Get variation ID based on default attributes
-                    $variation_id = $product->get_matching_variation($default_attributes);
-                    
-                    if ($variation_id) {
-                        // Add the variation to cart
-                        WC()->cart->add_to_cart($this->default_product_id, 1, $variation_id, $default_attributes);
-                    }
                 }
             }
         }
