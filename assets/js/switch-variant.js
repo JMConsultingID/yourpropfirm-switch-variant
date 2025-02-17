@@ -46,4 +46,36 @@
         });
     });
 
+    // Apply styling for radio button layout
+    const style = `
+        .yourpropfirm-radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .yourpropfirm-radio-group label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .yourpropfirm-radio-group input[type="radio"] {
+            display: none;
+        }
+        .yourpropfirm-radio-group input[type="radio"]:checked + label {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+    `;
+
+    let styleSheet = document.createElement("style");
+    styleSheet.type = "text/css";
+    styleSheet.innerText = style;
+    document.head.appendChild(styleSheet);
+
 })( jQuery );
