@@ -50,18 +50,19 @@ class YourPropFirm_Switch_Variant {
 
         $variations = $product->get_available_variations();
         $attributes = $product->get_variation_attributes();
-        $default_attributes = $product->get_default_attributes();
 
+        // Get default variation attributes
+        $default_attributes = $product->get_default_attributes();
+        
         echo '<div id="yourpropfirm-variant-switcher">';
         echo '<h3>Choose Variant</h3>';
         
         foreach ($attributes as $attribute_name => $options) {
-            $default_value = isset($default_attributes[$attribute_name]) ? $default_attributes[$attribute_name] : '';
             echo '<label>' . wc_attribute_label($attribute_name) . '</label>';
             echo '<select class="yourpropfirm-switch" data-attribute="' . esc_attr($attribute_name) . '">';
             foreach ($options as $option) {
-                $selected = ($option == $default_value) ? ' selected' : '';
-                echo '<option value="' . esc_attr($option) . '"' . $selected . '>' . esc_html($option) . '</option>';
+                $selected = isset($default_attributes[$attribute_name]) && $default_attributes[$attribute_name] == $option ? 'selected' : '';
+                echo '<option value="' . esc_attr($option) . '" ' . $selected . '>' . esc_html($option) . '</option>';
             }
             echo '</select>';
         }
@@ -109,7 +110,13 @@ class YourPropFirm_Switch_Variant {
         }
 
         if (!$variation_id) {
-            wp_send_json_error(['message' => 'Invalid variation selected.']);
+            // If no valid variation found, get the default variation
+            $default_variation_id = $product->get_default_variation_id();
+            if ($default_variation_id) {
+                $variation_id = $default_variation_id;
+            } else {
+                wp_send_json_error(['message' => 'Invalid variation selected.']);
+            }
         }
 
         WC()->cart->empty_cart();
