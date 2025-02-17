@@ -48,18 +48,10 @@ class YourPropFirm_Variation_Manager {
             
             if ($product && $product->is_type('variable')) {
                 $default_attributes = $product->get_default_attributes();
+
+                // Testing raw output
+                var_dump($default_attributes);
                 
-                if (!empty($default_attributes)) {
-                    $variation_id = $product->get_matching_variation($default_attributes);
-                    
-                    if ($variation_id) {
-                        WC()->cart->add_to_cart($this->default_product_id, 1, $variation_id, $default_attributes);
-                        
-                        // Refresh the page to show the added product
-                        wp_safe_redirect(wc_get_checkout_url());
-                        exit;
-                    }
-                }
             }
         }
     }
