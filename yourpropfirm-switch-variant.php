@@ -20,7 +20,7 @@ class YourPropFirm_Variation_Manager {
         // Set your default product ID here
         $this->default_product_id = 1202; // Replace with your product ID
 
-        add_action('init', [$this, 'add_default_variation_to_cart'], 5);
+        add_action('template_redirect', [$this, 'add_default_variation_to_cart'], 5);
         add_filter('woocommerce_checkout_redirect_empty_cart', '__return_false');
 
 
