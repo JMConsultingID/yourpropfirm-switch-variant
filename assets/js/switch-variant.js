@@ -38,7 +38,7 @@
             });
         }
 
-        // Pre-fill selected variation from URL parameter if exists
+        // Pre-fill selected variation based on URL parameter
         function getQueryParams() {
             let params = {};
             window.location.search.replace(/^[?&]/, '').split('&').forEach(function(param) {
@@ -50,16 +50,26 @@
 
         let urlParams = getQueryParams();
         if (urlParams['add-to-cart']) {
-            let storedVariation = localStorage.getItem('yourpropfirm_selected_variation');
-            if (storedVariation) {
-                storedVariation = JSON.parse(storedVariation);
-                $('.yourpropfirm-switch').each(function() {
-                    let attribute = $(this).data('attribute');
-                    if (storedVariation[attribute]) {
-                        $(this).val(storedVariation[attribute]);
+            let variationId = urlParams['add-to-cart'];
+            
+            $.ajax({
+                type: 'GET',
+                url: yourpropfirmAjax.ajaxurl,
+                data: {
+                    action: 'yourpropfirm_get_variation_attributes',
+                    variation_id: variationId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('.yourpropfirm-switch').each(function() {
+                            let attribute = $(this).data('attribute');
+                            if (response.data[attribute]) {
+                                $(this).val(response.data[attribute]);
+                            }
+                        });
                     }
-                });
-            }
+                }
+            });
         }
 
         $('.yourpropfirm-switch').on('change', function() {

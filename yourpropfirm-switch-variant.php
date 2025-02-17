@@ -19,6 +19,8 @@ class YourPropFirm_Switch_Variant {
         add_action('woocommerce_before_checkout_form', [$this, 'display_variant_selector'], 5);
         add_action('wp_ajax_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_ajax_nopriv_yourpropfirm_update_cart', [$this, 'update_cart']);
+        add_action('wp_ajax_yourpropfirm_get_variation_attributes', [$this, 'get_variation_attributes']);
+        add_action('wp_ajax_nopriv_yourpropfirm_get_variation_attributes', [$this, 'get_variation_attributes']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
     }
 
@@ -64,6 +66,23 @@ class YourPropFirm_Switch_Variant {
         }
         
         echo '</div>';
+    }
+
+    public function get_variation_attributes() {
+        check_ajax_referer('yourpropfirm_nonce', 'security');
+
+        $variation_id = isset($_GET['variation_id']) ? absint($_GET['variation_id']) : 0;
+        if (!$variation_id) {
+            wp_send_json_error(['message' => 'Invalid variation ID.']);
+        }
+
+        $variation = wc_get_product($variation_id);
+        if (!$variation || !$variation->is_type('variation')) {
+            wp_send_json_error(['message' => 'Variation not found.']);
+        }
+
+        $attributes = $variation->get_attributes();
+        wp_send_json_success($attributes);
     }
 
     public function update_cart() {
