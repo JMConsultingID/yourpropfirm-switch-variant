@@ -23,8 +23,9 @@
                 },
                 success: function(response) {
                     if (response.success) {
+                        // Update cart fragments without reloading
                         $(document.body).trigger('wc_fragment_refresh');
-                        $(document.body).trigger('update_checkout');
+                        // Store selected variation in localStorage
                         localStorage.setItem('yourpropfirm_selected_variation', JSON.stringify(selectedAttributes));
                     } else {
                         alert(response.data.message);
@@ -36,35 +37,14 @@
             });
         }
 
-        function getQueryParams() {
-            let params = {};
-            window.location.search.replace(/^[?&]/, '').split('&').forEach(function(param) {
-                let parts = param.split('=');
-                params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1] || '');
-            });
-            return params;
-        }
-
-        let urlParams = getQueryParams();
-        if (urlParams['add-to-cart']) {
-            let variationId = urlParams['add-to-cart'];
-            
-            $.ajax({
-                type: 'GET',
-                url: yourpropfirmAjax.ajaxurl,
-                data: {
-                    action: 'yourpropfirm_get_variation_attributes',
-                    variation_id: variationId
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $('.yourpropfirm-switch').each(function() {
-                            let attribute = $(this).data('attribute');
-                            if (response.data[attribute]) {
-                                $(this).val(response.data[attribute]);
-                            }
-                        });
-                    }
+        // Restore last selected variation after refresh
+        let storedVariation = localStorage.getItem('yourpropfirm_selected_variation');
+        if (storedVariation) {
+            storedVariation = JSON.parse(storedVariation);
+            $('.yourpropfirm-switch').each(function() {
+                let attribute = $(this).data('attribute');
+                if (storedVariation[attribute]) {
+                    $(this).val(storedVariation[attribute]);
                 }
             });
         }
