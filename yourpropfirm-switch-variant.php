@@ -23,12 +23,8 @@ class YourPropFirm_Variation_Manager {
         add_action('template_redirect', [$this, 'add_default_variation_to_cart'], 5);
         add_filter('woocommerce_checkout_redirect_empty_cart', '__return_false');
 
-
-        // Initialize default product hooks
-        //add_action('init', [$this, 'add_default_variation_to_cart']);
-        
         // Initialize variation switcher hooks
-        add_action('woocommerce_before_checkout_billing_form', [$this, 'display_variant_selector'], 5);
+        add_action('woocommerce_before_checkout_form', [$this, 'display_variant_selector'], 5);
         add_action('wp_ajax_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_ajax_nopriv_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
