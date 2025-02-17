@@ -81,7 +81,11 @@ class YourPropFirm_Switch_Variant {
             wp_send_json_error(['message' => 'Variation not found.']);
         }
 
-        $attributes = $variation->get_attributes();
+        $attributes = [];
+        foreach ($variation->get_attributes() as $key => $value) {
+            $attributes[str_replace('attribute_', '', $key)] = $value;
+        }
+        
         wp_send_json_success($attributes);
     }
 
