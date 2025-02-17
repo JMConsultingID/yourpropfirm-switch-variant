@@ -38,18 +38,6 @@
             });
         }
 
-        // Restore last selected variation after refresh
-        let storedVariation = localStorage.getItem('yourpropfirm_selected_variation');
-        if (storedVariation) {
-            storedVariation = JSON.parse(storedVariation);
-            $('.yourpropfirm-switch').each(function() {
-                let attribute = $(this).data('attribute');
-                if (storedVariation[attribute]) {
-                    $(this).val(storedVariation[attribute]);
-                }
-            });
-        }
-
         $('.yourpropfirm-switch').on('change', function() {
             updateCart();
         });
