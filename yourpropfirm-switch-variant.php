@@ -37,10 +37,13 @@ class YourPropFirm_Switch_Variant {
         
         $cart_items = WC()->cart->get_cart();
         $product_id = 0;
-        $selected_variation_id = isset($_GET['add-to-cart']) ? absint($_GET['add-to-cart']) : 0;
+        $selected_variation_id = 0;
         
         foreach ($cart_items as $cart_item) {
             $product_id = $cart_item['product_id'];
+            if (isset($cart_item['variation_id']) && $cart_item['variation_id'] > 0) {
+                $selected_variation_id = $cart_item['variation_id'];
+            }
             break;
         }
         
