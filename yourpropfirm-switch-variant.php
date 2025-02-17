@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 class YourPropFirm_Switch_Variant {
 
     public function __construct() {
-        add_action('woocommerce_before_checkout_form', [$this, 'display_variant_selector'], 5);
+        add_action('woocommerce_before_checkout_billing_form', [$this, 'display_variant_selector'], 5);
         add_action('wp_ajax_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_ajax_nopriv_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
