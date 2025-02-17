@@ -37,6 +37,8 @@
         }
 
         $('.yourpropfirm-radio-group input[type="radio"]').on('change', function() {
+            $('.yourpropfirm-radio-group label').removeClass('selected');
+            $(this).next('label').addClass('selected');
             updateCart();
         });
 
@@ -51,7 +53,8 @@
         .yourpropfirm-radio-group {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 20px;
+            padding: 10px 0px 0px 0px;
         }
         .yourpropfirm-radio-group label {
             display: flex;
@@ -66,7 +69,8 @@
         .yourpropfirm-radio-group input[type="radio"] {
             display: none;
         }
-        .yourpropfirm-radio-group input[type="radio"]:checked + label {
+        .yourpropfirm-radio-group input[type="radio"]:checked + label,
+        .yourpropfirm-radio-group label.selected {
             background-color: #007bff;
             color: white;
             border-color: #007bff;
