@@ -20,7 +20,6 @@ class YourPropFirm_Switch_Variant {
         add_action('wp_ajax_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_ajax_nopriv_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
-        add_action('template_redirect', [$this, 'set_default_variation']);
     }
 
     public function enqueue_scripts() {
@@ -113,32 +112,6 @@ class YourPropFirm_Switch_Variant {
         WC()->cart->empty_cart();
         WC()->cart->add_to_cart($product_id, 1, $variation_id);
         wp_send_json_success(['message' => 'Cart updated successfully.']);
-    }
-
-    public function set_default_variation() {
-        if (is_checkout() && isset($_GET['add-to-cart'])) {
-            $product_id = absint($_GET['add-to-cart']);
-            $product = wc_get_product($product_id);
-            
-            if ($product && $product->is_type('variable')) {
-                $default_attributes = $product->get_default_attributes();
-                foreach ($product->get_available_variations() as $variation) {
-                    $match = true;
-                    foreach ($default_attributes as $key => $value) {
-                        $attribute_key = 'attribute_' . sanitize_title($key);
-                        if (!isset($variation['attributes'][$attribute_key]) || $variation['attributes'][$attribute_key] !== $value) {
-                            $match = false;
-                            break;
-                        }
-                    }
-                    if ($match) {
-                        WC()->cart->empty_cart();
-                        WC()->cart->add_to_cart($product_id, 1, $variation['variation_id']);
-                        break;
-                    }
-                }
-            }
-        }
     }
 }
 
