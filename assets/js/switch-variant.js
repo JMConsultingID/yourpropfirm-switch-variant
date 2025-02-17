@@ -2,16 +2,14 @@
     'use strict';
 
     jQuery(document).ready(function($) {
-        $('#yourpropfirm-update-cart').on('click', function(e) {
-            e.preventDefault();
-            
+        function updateCart() {
             let selectedAttributes = {};
             $('.yourpropfirm-switch').each(function() {
                 let attribute = $(this).data('attribute');
                 let value = $(this).val();
                 selectedAttributes[attribute] = value;
             });
-            
+
             $.ajax({
                 type: 'POST',
                 url: yourpropfirmAjax.ajaxurl,
@@ -34,6 +32,15 @@
                     $('#yourpropfirm-update-cart').prop('disabled', false).text('Update Cart');
                 }
             });
+        }
+
+        $('.yourpropfirm-switch').on('change', function() {
+            updateCart();
+        });
+
+        $('#yourpropfirm-update-cart').on('click', function(e) {
+            e.preventDefault();
+            updateCart();
         });
     });
 

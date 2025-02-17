@@ -63,7 +63,6 @@ class YourPropFirm_Switch_Variant {
             echo '</select>';
         }
         
-        echo '<button id="yourpropfirm-update-cart" class="button">Update Cart</button>';
         echo '</div>';
     }
 
