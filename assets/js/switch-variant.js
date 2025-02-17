@@ -25,8 +25,7 @@
                     if (response.success) {
                         // Update cart fragments without reloading
                         $(document.body).trigger('wc_fragment_refresh');
-                        // Store selected variation in localStorage
-                        localStorage.setItem('yourpropfirm_selected_variation', JSON.stringify(selectedAttributes));
+                        $(document.body).trigger('update_checkout');
                     } else {
                         alert(response.data.message);
                     }
