@@ -23,6 +23,11 @@ class YourPropFirm_Variation_Manager {
         add_action('template_redirect', [$this, 'handle_empty_cart_redirect'], 5);
         add_filter('woocommerce_checkout_redirect_empty_cart', '__return_false');
 
+        // Add these to your class constructor
+    add_action('woocommerce_init', [$this, 'ensure_session']);
+    add_filter('woocommerce_checkout_update_order_review_expired', '__return_false');
+    add_filter('nonce_user_logged_out', [$this, 'set_nonce_user_logged_out'], 10, 2);
+
 
         // Initialize default product hooks
         add_action('init', [$this, 'add_default_variation_to_cart']);
@@ -35,23 +40,53 @@ class YourPropFirm_Variation_Manager {
     }
 
 
-    // Add this new method to your class
+    
+
+    // Add these new methods to your class
+    public function ensure_session() {
+        if (!WC()->session) {
+            WC()->session = new WC_Session_Handler();
+            WC()->session->init();
+        }
+    }
+
+    public function set_nonce_user_logged_out($uid, $action) {
+        return is_checkout() ? wp_get_current_user()->ID : $uid;
+    }
+
     public function handle_empty_cart_redirect() {
-        // Only handle checkout page
         if (!is_checkout()) {
             return;
         }
+
+        // Ensure session is started
+        if (!WC()->session) {
+            $this->ensure_session();
+        }
         
-        // If cart is empty, add default product before any redirect can happen
         if (WC()->cart->is_empty()) {
             $product = wc_get_product($this->default_product_id);
             
             if ($product && $product->is_type('variable')) {
                 $default_attributes = $product->get_default_attributes();
-
-                // Testing raw output
-                var_dump($default_attributes);
                 
+                if (!empty($default_attributes)) {
+                    $variation_id = $product->get_matching_variation($default_attributes);
+                    
+                    if ($variation_id) {
+                        // Clear any expired session notices
+                        wc_clear_notices();
+                        
+                        WC()->cart->add_to_cart($this->default_product_id, 1, $variation_id, $default_attributes);
+                        
+                        // Refresh fragments and mini cart
+                        WC()->cart->calculate_totals();
+                        WC()->session->set('cart_totals', WC()->cart->get_totals());
+                        
+                        wp_safe_redirect(wc_get_checkout_url());
+                        exit;
+                    }
+                }
             }
         }
     }
