@@ -38,16 +38,28 @@
             });
         }
 
-        // Restore last selected variation after refresh
-        let storedVariation = localStorage.getItem('yourpropfirm_selected_variation');
-        if (storedVariation) {
-            storedVariation = JSON.parse(storedVariation);
-            $('.yourpropfirm-switch').each(function() {
-                let attribute = $(this).data('attribute');
-                if (storedVariation[attribute]) {
-                    $(this).val(storedVariation[attribute]);
-                }
+        // Pre-fill selected variation from URL parameter if exists
+        function getQueryParams() {
+            let params = {};
+            window.location.search.replace(/^[?&]/, '').split('&').forEach(function(param) {
+                let parts = param.split('=');
+                params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1] || '');
             });
+            return params;
+        }
+
+        let urlParams = getQueryParams();
+        if (urlParams['add-to-cart']) {
+            let storedVariation = localStorage.getItem('yourpropfirm_selected_variation');
+            if (storedVariation) {
+                storedVariation = JSON.parse(storedVariation);
+                $('.yourpropfirm-switch').each(function() {
+                    let attribute = $(this).data('attribute');
+                    if (storedVariation[attribute]) {
+                        $(this).val(storedVariation[attribute]);
+                    }
+                });
+            }
         }
 
         $('.yourpropfirm-switch').on('change', function() {
