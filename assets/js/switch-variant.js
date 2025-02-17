@@ -4,8 +4,8 @@
     jQuery(document).ready(function($) {
         function updateCart() {
             let selectedAttributes = {};
-            $('.yourpropfirm-switch').each(function() {
-                let attribute = $(this).data('attribute');
+            $('.yourpropfirm-radio-group input[type="radio"]:checked').each(function() {
+                let attribute = $(this).closest('.yourpropfirm-radio-group').data('attribute');
                 let value = $(this).val();
                 selectedAttributes[attribute] = value;
             });
@@ -36,7 +36,7 @@
             });
         }
 
-        $('.yourpropfirm-switch').on('change', function() {
+        $('.yourpropfirm-radio-group input[type="radio"]').on('change', function() {
             updateCart();
         });
 

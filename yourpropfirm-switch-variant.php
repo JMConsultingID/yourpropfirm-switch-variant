@@ -70,12 +70,14 @@ class YourPropFirm_Switch_Variant {
         
         foreach ($attributes as $attribute_name => $options) {
             echo '<label>' . wc_attribute_label($attribute_name) . '</label>';
-            echo '<select class="yourpropfirm-switch" data-attribute="' . esc_attr($attribute_name) . '">';
+            echo '<div class="yourpropfirm-radio-group" data-attribute="' . esc_attr($attribute_name) . '">';
             foreach ($options as $option) {
-                $selected = (isset($selected_attributes['attribute_' . sanitize_title($attribute_name)]) && $selected_attributes['attribute_' . sanitize_title($attribute_name)] == $option) ? ' selected' : '';
-                echo '<option value="' . esc_attr($option) . '"' . $selected . '>' . esc_html($option) . '</option>';
+                $selected = (isset($selected_attributes['attribute_' . sanitize_title($attribute_name)]) && $selected_attributes['attribute_' . sanitize_title($attribute_name)] == $option) ? ' checked' : '';
+                echo '<label class="yourpropfirm-radio-label">';
+                echo '<input type="radio" name="' . esc_attr($attribute_name) . '" value="' . esc_attr($option) . '" class="yourpropfirm-switch"' . $selected . '> ' . esc_html($option);
+                echo '</label>';
             }
-            echo '</select>';
+            echo '</div>';
         }
         
         echo '</div>';
