@@ -1,0 +1,39 @@
+/* Style for radio button layout */
+.yourpropfirm-radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.yourpropfirm-radio-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    background: #f8f9fa;
+    color: #333;
+}
+
+.yourpropfirm-radio-group input[type="radio"] {
+    display: none;
+}
+
+.yourpropfirm-radio-group input[type="radio"]:checked + label {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.yourpropfirm-radio-label:hover {
+    background-color: #e0e0e0;
+}
+
+.yourpropfirm-radio-group input[type="radio"]:disabled + label {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
