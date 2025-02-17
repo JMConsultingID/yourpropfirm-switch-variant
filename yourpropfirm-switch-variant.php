@@ -35,44 +35,48 @@ class YourPropFirm_Variation_Manager {
     }
 
 
-    // Add this new method to your class
     public function handle_empty_cart_redirect() {
-        // Only handle checkout page
-        if (!is_checkout()) {
-            return;
-        }
+    if (!is_checkout()) {
+        return;
+    }
+    
+    if (WC()->cart->is_empty()) {
+        $product = wc_get_product($this->default_product_id);
         
-        // If cart is empty, add default product before any redirect can happen
-        if (WC()->cart->is_empty()) {
-            $product = wc_get_product($this->default_product_id);
+        if ($product && $product->is_type('variable')) {
+            $default_attributes = $product->get_default_attributes();
             
-            if ($product && $product->is_type('variable')) {
-                $default_attributes = $product->get_default_attributes();
-                ?>
-                <p>
-                    <?php
-                // Testing raw output
-                var_dump($default_attributes);
-                ?>
-                </p>
-                <?php
-                if (!empty($default_attributes)) {
-                    $variation_id = $product->get_matching_variation($default_attributes);
-
-                    // Testing raw output
-                    var_dump($variation_id);
-                    
-                    if ($variation_id) {
-                        WC()->cart->add_to_cart($this->default_product_id, 1, $variation_id, $default_attributes);
-                        
-                        // Refresh the page to show the added product
-                        wp_safe_redirect(wc_get_checkout_url());
-                        exit;
-                    }
+            // Format attributes correctly for WooCommerce
+            $formatted_attributes = [];
+            foreach ($default_attributes as $key => $value) {
+                $formatted_attributes['attribute_' . $key] = $value;
+            }
+            
+            // Debug output
+            echo "Default Attributes:<br>";
+            var_dump($default_attributes);
+            echo "<br>Formatted Attributes:<br>";
+            var_dump($formatted_attributes);
+            
+            if (!empty($formatted_attributes)) {
+                $variation_id = $product->get_matching_variation($formatted_attributes);
+                
+                echo "<br>Variation ID:<br>";
+                var_dump($variation_id);
+                
+                if ($variation_id) {
+                    WC()->cart->add_to_cart($this->default_product_id, 1, $variation_id, $formatted_attributes);
+                    wp_safe_redirect(wc_get_checkout_url());
+                    exit;
                 }
             }
+            
+            // If no matching variation found, let's see available variations
+            echo "<br>Available Variations:<br>";
+            var_dump($product->get_available_variations());
         }
     }
+}
 
     public function add_default_variation_to_cart() {
         // Only run on checkout page
