@@ -23,10 +23,8 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        // Update cart fragments without reloading
                         $(document.body).trigger('wc_fragment_refresh');
                         $(document.body).trigger('update_checkout');
-                        // Store selected variation in localStorage
                         localStorage.setItem('yourpropfirm_selected_variation', JSON.stringify(selectedAttributes));
                     } else {
                         alert(response.data.message);
@@ -38,7 +36,6 @@
             });
         }
 
-        // Pre-fill selected variation based on URL parameter
         function getQueryParams() {
             let params = {};
             window.location.search.replace(/^[?&]/, '').split('&').forEach(function(param) {
