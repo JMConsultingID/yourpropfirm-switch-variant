@@ -32,8 +32,50 @@ class YourPropFirm_Variation_Manager {
         add_action('wp_ajax_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_ajax_nopriv_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
+
+        add_filter('template_include', [$this, 'handle_checkout_endpoints'], 99);
+        add_filter('request', [$this, 'handle_checkout_query_vars']);
+        add_action('template_redirect', [$this, 'verify_order_received']);
     }
 
+    public function handle_checkout_endpoints($template) {
+        // Check if it's a checkout endpoint (like order-received)
+        if (is_checkout() && is_wc_endpoint_url()) {
+            $endpoint = WC()->query->get_current_endpoint();
+
+            if ($endpoint === 'order-received') {
+                // Return the order-received template
+                return WC()->plugin_path() . '/templates/checkout/thankyou.php';
+            }
+        }
+
+        return $template;
+    }
+
+    public function handle_checkout_query_vars($vars) {
+        // Ensure order-received endpoint works correctly on the homepage
+        if (isset($vars['page_id']) && $vars['page_id'] == get_option('page_on_front') && get_option('page_on_front') == wc_get_page_id('checkout')) {
+            if (isset($_GET['order-received'])) {
+                $vars['order-received'] = $_GET['order-received'];
+            }
+        }
+
+        return $vars;
+    }
+
+    public function verify_order_received() {
+        if (isset($_GET['order-received'])) {
+            $order_id  = absint($_GET['order-received']);
+            $order_key = isset($_GET['key']) ? wc_clean(wp_unslash($_GET['key'])) : '';
+            $order     = wc_get_order($order_id);
+
+            if (!$order || $order->get_order_key() !== $order_key) {
+                // Invalid order key, redirect to checkout
+                wp_redirect(wc_get_checkout_url());
+                exit;
+            }
+        }
+    }
 
     public function add_default_variation_to_cart() {
         if (!is_checkout()) {
