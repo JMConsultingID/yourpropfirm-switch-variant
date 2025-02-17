@@ -20,8 +20,12 @@ class YourPropFirm_Variation_Manager {
         // Set your default product ID here
         $this->default_product_id = 1202; // Replace with your product ID
 
+        add_action('init', [$this, 'add_default_variation_to_cart'], 5);
+        add_filter('woocommerce_checkout_redirect_empty_cart', '__return_false');
+
+
         // Initialize default product hooks
-        add_action('init', [$this, 'add_default_variation_to_cart']);
+        //add_action('init', [$this, 'add_default_variation_to_cart']);
         
         // Initialize variation switcher hooks
         add_action('woocommerce_before_checkout_billing_form', [$this, 'display_variant_selector'], 5);
@@ -30,13 +34,12 @@ class YourPropFirm_Variation_Manager {
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
     }
 
+
     public function add_default_variation_to_cart() {
-        // Only run on checkout page
         if (!is_checkout()) {
             return;
         }
         
-        // Check if cart is empty
         if (WC()->cart->is_empty()) {
             $product = wc_get_product($this->default_product_id);
             
