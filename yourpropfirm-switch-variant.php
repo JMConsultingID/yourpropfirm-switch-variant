@@ -113,7 +113,7 @@ class YourPropFirm_Variation_Manager {
         }
 
         echo '<div id="yourpropfirm-variant-switcher">';
-        echo '<h3>Choose Variant</h3>';
+        echo '<h3>Select Account</h3>';
 
         foreach ($attributes as $attribute_name => $options) {
             echo '<strong><label>' . wc_attribute_label($attribute_name) . '</label></strong>';
