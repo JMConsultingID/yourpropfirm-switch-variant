@@ -70,13 +70,48 @@ class YourPropFirm_Switch_Variant {
     public function update_cart() {
         check_ajax_referer('yourpropfirm_nonce', 'security');
         
-        $variation_id = isset($_POST['variation_id']) ? absint($_POST['variation_id']) : 0;
+        $variation_attributes = isset($_POST['variation_attributes']) ? $_POST['variation_attributes'] : [];
+        if (empty($variation_attributes)) {
+            wp_send_json_error(['message' => 'No variation attributes provided.']);
+        }
+
+        $product_id = 0;
+        foreach (WC()->cart->get_cart() as $cart_item) {
+            $product_id = $cart_item['product_id'];
+            break;
+        }
+
+        if (!$product_id) {
+            wp_send_json_error(['message' => 'No product found in cart.']);
+        }
+
+        $product = wc_get_product($product_id);
+        if (!$product->is_type('variable')) {
+            wp_send_json_error(['message' => 'Selected product is not a variable product.']);
+        }
+
+        $variation_id = 0;
+        foreach ($product->get_available_variations() as $variation) {
+            $match = true;
+            foreach ($variation_attributes as $attribute => $value) {
+                $attribute_key = 'attribute_' . sanitize_title($attribute);
+                if (!isset($variation['attributes'][$attribute_key]) || $variation['attributes'][$attribute_key] !== $value) {
+                    $match = false;
+                    break;
+                }
+            }
+            if ($match) {
+                $variation_id = $variation['variation_id'];
+                break;
+            }
+        }
+
         if (!$variation_id) {
             wp_send_json_error(['message' => 'Invalid variation selected.']);
         }
 
         WC()->cart->empty_cart();
-        WC()->cart->add_to_cart($variation_id);
+        WC()->cart->add_to_cart($product_id, 1, $variation_id);
         wp_send_json_success(['message' => 'Cart updated successfully.']);
     }
 }
