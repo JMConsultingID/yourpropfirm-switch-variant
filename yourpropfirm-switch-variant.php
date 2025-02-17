@@ -20,6 +20,10 @@ class YourPropFirm_Variation_Manager {
         // Set your default product ID here
         $this->default_product_id = 1202; // Replace with your product ID
 
+        add_action('template_redirect', [$this, 'handle_empty_cart_redirect'], 5);
+        add_filter('woocommerce_checkout_redirect_empty_cart', '__return_false');
+
+
         // Initialize default product hooks
         add_action('init', [$this, 'add_default_variation_to_cart']);
         
@@ -28,6 +32,36 @@ class YourPropFirm_Variation_Manager {
         add_action('wp_ajax_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_ajax_nopriv_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
+    }
+
+
+    // Add this new method to your class
+    public function handle_empty_cart_redirect() {
+        // Only handle checkout page
+        if (!is_checkout()) {
+            return;
+        }
+        
+        // If cart is empty, add default product before any redirect can happen
+        if (WC()->cart->is_empty()) {
+            $product = wc_get_product($this->default_product_id);
+            
+            if ($product && $product->is_type('variable')) {
+                $default_attributes = $product->get_default_attributes();
+                
+                if (!empty($default_attributes)) {
+                    $variation_id = $product->get_matching_variation($default_attributes);
+                    
+                    if ($variation_id) {
+                        WC()->cart->add_to_cart($this->default_product_id, 1, $variation_id, $default_attributes);
+                        
+                        // Refresh the page to show the added product
+                        wp_safe_redirect(wc_get_checkout_url());
+                        exit;
+                    }
+                }
+            }
+        }
     }
 
     public function add_default_variation_to_cart() {
