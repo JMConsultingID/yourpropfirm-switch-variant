@@ -19,8 +19,6 @@ class YourPropFirm_Switch_Variant {
         add_action('woocommerce_before_checkout_form', [$this, 'display_variant_selector'], 5);
         add_action('wp_ajax_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_ajax_nopriv_yourpropfirm_update_cart', [$this, 'update_cart']);
-        add_action('wp_ajax_yourpropfirm_get_variation_attributes', [$this, 'get_variation_attributes']);
-        add_action('wp_ajax_nopriv_yourpropfirm_get_variation_attributes', [$this, 'get_variation_attributes']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
     }
 
@@ -39,6 +37,7 @@ class YourPropFirm_Switch_Variant {
         
         $cart_items = WC()->cart->get_cart();
         $product_id = 0;
+        $selected_variation_id = isset($_GET['add-to-cart']) ? absint($_GET['add-to-cart']) : 0;
         
         foreach ($cart_items as $cart_item) {
             $product_id = $cart_item['product_id'];
@@ -52,6 +51,16 @@ class YourPropFirm_Switch_Variant {
 
         $variations = $product->get_available_variations();
         $attributes = $product->get_variation_attributes();
+        $selected_attributes = [];
+
+        if ($selected_variation_id) {
+            foreach ($variations as $variation) {
+                if ($variation['variation_id'] == $selected_variation_id) {
+                    $selected_attributes = $variation['attributes'];
+                    break;
+                }
+            }
+        }
 
         echo '<div id="yourpropfirm-variant-switcher">';
         echo '<h3>Choose Variant</h3>';
@@ -60,33 +69,13 @@ class YourPropFirm_Switch_Variant {
             echo '<label>' . wc_attribute_label($attribute_name) . '</label>';
             echo '<select class="yourpropfirm-switch" data-attribute="' . esc_attr($attribute_name) . '">';
             foreach ($options as $option) {
-                echo '<option value="' . esc_attr($option) . '">' . esc_html($option) . '</option>';
+                $selected = (isset($selected_attributes['attribute_' . sanitize_title($attribute_name)]) && $selected_attributes['attribute_' . sanitize_title($attribute_name)] == $option) ? ' selected' : '';
+                echo '<option value="' . esc_attr($option) . '"' . $selected . '>' . esc_html($option) . '</option>';
             }
             echo '</select>';
         }
         
         echo '</div>';
-    }
-
-    public function get_variation_attributes() {
-        check_ajax_referer('yourpropfirm_nonce', 'security');
-
-        $variation_id = isset($_GET['variation_id']) ? absint($_GET['variation_id']) : 0;
-        if (!$variation_id) {
-            wp_send_json_error(['message' => 'Invalid variation ID.']);
-        }
-
-        $variation = wc_get_product($variation_id);
-        if (!$variation || !$variation->is_type('variation')) {
-            wp_send_json_error(['message' => 'Variation not found.']);
-        }
-
-        $attributes = [];
-        foreach ($variation->get_attributes() as $key => $value) {
-            $attributes[str_replace('attribute_', '', $key)] = $value;
-        }
-        
-        wp_send_json_success($attributes);
     }
 
     public function update_cart() {
