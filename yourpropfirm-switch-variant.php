@@ -52,28 +52,13 @@ class YourPropFirm_Variation_Manager {
                 $formatted_attributes['attribute_' . $key] = $value;
             }
             
-            // Debug output
-            echo "Default Attributes:<br>";
-            var_dump($default_attributes);
-            echo "<br>Formatted Attributes:<br>";
-            var_dump($formatted_attributes);
-            
-            if (!empty($formatted_attributes)) {
-                $variation_id = $product->get_matching_variation($formatted_attributes);
+            $variation_id = $product->get_matching_variation($formatted_attributes);
                 
-                echo "<br>Variation ID:<br>";
-                var_dump($variation_id);
-                
-                if ($variation_id) {
-                    WC()->cart->add_to_cart($this->default_product_id, 1, $variation_id, $formatted_attributes);
-                    wp_safe_redirect(wc_get_checkout_url());
-                    exit;
-                }
+            if ($variation_id) {
+                WC()->cart->add_to_cart($this->default_product_id, 1, $variation_id, $formatted_attributes);
+                wp_safe_redirect(wc_get_checkout_url());
+                exit;
             }
-            
-            // If no matching variation found, let's see available variations
-            echo "<br>Available Variations:<br>";
-            var_dump($product->get_available_variations());
         }
     }
 }
