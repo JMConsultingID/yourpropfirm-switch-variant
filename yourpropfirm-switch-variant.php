@@ -24,7 +24,7 @@ class YourPropFirm_Switch_Variant {
 
     public function enqueue_scripts() {
         if (is_checkout()) {
-            wp_enqueue_script('yourpropfirm-switch-variant', plugin_dir_url(__FILE__) . 'assets/js/switch-variant.js', ['jquery'], '1.0', true);
+            wp_enqueue_script('yourpropfirm-switch-variant', plugin_dir_url(__FILE__) . 'assets/js/switch-variant.js', ['jquery'], '1.1', true);
             wp_localize_script('yourpropfirm-switch-variant', 'yourpropfirmAjax', [
                 'ajaxurl' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('yourpropfirm_nonce'),
