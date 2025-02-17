@@ -70,42 +70,13 @@ class YourPropFirm_Switch_Variant {
     public function update_cart() {
         check_ajax_referer('yourpropfirm_nonce', 'security');
         
-        $product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
-        $selected_attributes = isset($_POST['variation_attributes']) ? $_POST['variation_attributes'] : [];
-        
-        if (!$product_id || empty($selected_attributes)) {
-            wp_send_json_error(['message' => 'Invalid product or attributes.']);
-        }
-
-        $product = wc_get_product($product_id);
-        if (!$product || !$product->is_type('variable')) {
-            wp_send_json_error(['message' => 'Invalid product.']);
-        }
-
-        $variations = $product->get_available_variations();
-        $variation_id = 0;
-
-        foreach ($variations as $variation) {
-            $match = true;
-            foreach ($selected_attributes as $key => $value) {
-                $attr_key = 'attribute_' . sanitize_title($key);
-                if (!isset($variation['attributes'][$attr_key]) || $variation['attributes'][$attr_key] !== $value) {
-                    $match = false;
-                    break;
-                }
-            }
-            if ($match) {
-                $variation_id = $variation['variation_id'];
-                break;
-            }
-        }
-
+        $variation_id = isset($_POST['variation_id']) ? absint($_POST['variation_id']) : 0;
         if (!$variation_id) {
             wp_send_json_error(['message' => 'Invalid variation selected.']);
         }
 
         WC()->cart->empty_cart();
-        WC()->cart->add_to_cart($product_id, 1, $variation_id);
+        WC()->cart->add_to_cart($variation_id);
         wp_send_json_success(['message' => 'Cart updated successfully.']);
     }
 }
