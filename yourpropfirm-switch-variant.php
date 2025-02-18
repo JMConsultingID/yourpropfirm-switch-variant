@@ -24,12 +24,22 @@ class YourPropFirm_Variation_Manager {
         add_filter('woocommerce_checkout_redirect_empty_cart', '__return_false');
 
         // Initialize variation switcher hooks
-        add_action('woocommerce_before_checkout_form', [$this, 'display_variant_selector'], 5);
+        add_action('woocommerce_checkout_before_customer_details', [$this, 'display_variant_selector'], 5);
         add_action('wp_ajax_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_ajax_nopriv_yourpropfirm_update_cart', [$this, 'update_cart']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
     }
 
+    public function enqueue_scripts() {
+        if (is_checkout()) {
+            wp_enqueue_script('yourpropfirm-switch-variant', plugin_dir_url(__FILE__) . 'assets/js/switch-variant.js', ['jquery'], '1.5', true);
+            wp_enqueue_style('yourpropfirm-switch-variant-style', plugin_dir_url(__FILE__) . 'assets/css/switch-variant.css', [], '1.5');
+            wp_localize_script('yourpropfirm-switch-variant', 'yourpropfirmAjax', [
+                'ajaxurl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('yourpropfirm_nonce'),
+            ]);
+        }
+    }
 
     public function add_default_variation_to_cart() {
         if (!is_checkout()) {
@@ -64,18 +74,6 @@ class YourPropFirm_Variation_Manager {
                     exit;
                 }
             }
-        }
-    }
-
-
-    public function enqueue_scripts() {
-        if (is_checkout()) {
-            wp_enqueue_script('yourpropfirm-switch-variant', plugin_dir_url(__FILE__) . 'assets/js/switch-variant.js', ['jquery'], '1.5', true);
-            wp_enqueue_style('yourpropfirm-switch-variant-style', plugin_dir_url(__FILE__) . 'assets/css/switch-variant.css', [], '1.5');
-            wp_localize_script('yourpropfirm-switch-variant', 'yourpropfirmAjax', [
-                'ajaxurl' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('yourpropfirm_nonce'),
-            ]);
         }
     }
 
